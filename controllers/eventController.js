@@ -5,9 +5,7 @@ class EventController {
     static addEvent = async (req, res) => { 
         
         try {
-            console.log("userdara",req.user)
-            console.log("file data",req.file)
-            
+             
             const file = req.file
             const result = await s3Uploadv2(file)
             const obj = {
@@ -51,6 +49,33 @@ class EventController {
         else {
             res.send({})  
         }
+        
+    }
+
+    static removeFile = async (req, res) => { 
+        try {
+            const { _id } = req.user;
+            const { id } = req.body;
+            if (_id)
+            {
+                const result = await EventModel.deleteOne({ _id: id }) 
+                if (result)
+                {
+                    res.send({"status":"success","message":"added removed successfully",data: result })    
+                }
+                else {
+                    res.status(400).send({"status":"failed","message":"unable to add file"})  
+                }
+            }
+            else {
+                res.status(400).send({"status":"failed","message":"unable to add file"}) 
+            }
+        }
+        catch (error) {
+            res.status(400).send({"status":"failed","message":"unable to add file"}) 
+        }
+        
+      
         
     }
 }

@@ -7,4 +7,7 @@ const storage = multer.memoryStorage()
 const upload = multer({ storage })
 router.post('/add',checkUserAuth,upload.single("file"),EventController.addEvent);
 router.post('/list',checkUserAuth,EventController.eventList);
+router.post('/remove',checkUserAuth,EventController.removeFile);
+
+
 export default router;
