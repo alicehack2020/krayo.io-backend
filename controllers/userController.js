@@ -18,7 +18,7 @@ class UserController{
            const token=Jwt.sign(data,
             process.env.JWT_SECRET_KEY, { expiresIn: "5d" })
       res.send({
-        "status": "success", "message": "user data", data: {
+        "status": "success", "message": "Login sucessfully", data: {
               data,token
           }})
         }

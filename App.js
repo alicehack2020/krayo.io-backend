@@ -11,8 +11,8 @@ import eventRoutes from "./routes/eventRoutes.js"
 const app=express()
 const port=process.env.PORT;
 const database_url=process.env.DATABASE_URL;
-//cores policy
-app.use(cors())
+
+app.use(cors());
 
 //database connection
 connectDb(database_url)
