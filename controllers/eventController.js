@@ -4,7 +4,10 @@ import jwt from 'jsonwebtoken'
 import https from 'https';
 import { parse } from 'url';
 import UserModel from "../model/User.js";
-class EventController { 
+import crypto from 'crypto'
+import CryptoJS from "crypto-js";
+ 
+ class EventController { 
     
     static addEvent = async (req, res) => { 
         
@@ -135,6 +138,58 @@ class EventController {
             else {
                 res.status(401).send({ "status": "failed", "message": "Unauthorized User, No Token" }) 
             }  
+        } catch (error) {
+             res.status(403).send('Invalid or expired token');
+        }
+    }
+
+    static downloadFile = async (req, res) => {
+        let file,fileName
+        try {
+            const { id } = req.params;
+ 
+            file = await EventModel.find({ _id: id }) 
+            console.log(file)
+            fileName=file[0].fileName
+            const fileUrl = parse(file[0].url);
+           
+             
+             
+   https.get(fileUrl, (response) => {
+     let fileData = Buffer.alloc(0);
+     response.on('data', (data) => {
+      fileData = Buffer.concat([fileData, data]);
+    });
+
+     response.on('end', () => {
+    
+      const secretKey = process.env.JWT_SECRET_KEY_File
+    //   const keyBuffer = Buffer.from(secretKey, 'hex');
+
+    //   const iv = crypto.randomBytes(16);
+    //   const cipher = crypto.createCipheriv('aes-256-cbc', keyBuffer, iv);
+    //   const encrypted = Buffer.concat([cipher.update(fileData), cipher.final()]);
+       console.log(fileName)
+        
+    //    const downloadToken = jwt.sign({ fileName }, keyBuffer, { expiresIn: '5m' });
+
+    //    res.setHeader('Content-Type', 'application/json');
+    //    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    //    res.json({ encrypted, iv, downloadToken, fileName});
+         
+    var file = CryptoJS.AES.encrypt(JSON.stringify(fileData),secretKey).toString();
+    res.json({ file, fileName});
+         
+    });
+  }).on('error', (error) => {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  });
+            
+            
+            
+              
         } catch (error) {
              res.status(403).send('Invalid or expired token');
         }
