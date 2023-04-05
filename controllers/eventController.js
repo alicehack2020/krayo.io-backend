@@ -2,11 +2,16 @@ import EventModel from "../model/Event.js";
 import s3Uploadv2 from "../config/s3Service.js"
 import jwt from 'jsonwebtoken'
 import https from 'https';
+// import https from 'http';
+// const http = require('http');
 import { parse } from 'url';
 import UserModel from "../model/User.js";
 import crypto from 'crypto'
 import CryptoJS from "crypto-js";
- 
+import axios from "axios"
+import fs from "fs"
+import pkg from 'aws-sdk';                                            
+const { S3 } = pkg;
  class EventController { 
     
     static addEvent = async (req, res) => { 
@@ -23,7 +28,7 @@ import CryptoJS from "crypto-js";
                 userId: _id,
                 fileName: file.originalname,
                 type: file.mimetype,
-                url:result.Location
+                Key:result.Key
             }
              
             if (_id)
@@ -31,7 +36,7 @@ import CryptoJS from "crypto-js";
                 const doc=new EventModel(data)
                 await doc.save() 
                 const list = await EventModel.find({ userId: _id }).select('-url')
-                res.send({"status":"success","message":"added successfully",data: list })
+                res.send({"status":"success","message":"added successfully",data: list})
             } 
             
 
@@ -144,56 +149,42 @@ import CryptoJS from "crypto-js";
     }
 
     static downloadFile = async (req, res) => {
-        let file,fileName
         try {
-            const { id } = req.params;
- 
-            file = await EventModel.find({ _id: id }) 
-            console.log(file)
-            fileName=file[0].fileName
-            const fileUrl = parse(file[0].url);
+          const { id } = req.params;
+          const file = await EventModel.findById(id);
+          console.log(file)
+          const fileName = file.fileName;
+          const fileKey = file.Key;
+      
            
-             
-             
-   https.get(fileUrl, (response) => {
-     let fileData = Buffer.alloc(0);
-     response.on('data', (data) => {
-      fileData = Buffer.concat([fileData, data]);
-    });
-
-     response.on('end', () => {
-    
-      const secretKey = process.env.JWT_SECRET_KEY_File
-    //   const keyBuffer = Buffer.from(secretKey, 'hex');
-
-    //   const iv = crypto.randomBytes(16);
-    //   const cipher = crypto.createCipheriv('aes-256-cbc', keyBuffer, iv);
-    //   const encrypted = Buffer.concat([cipher.update(fileData), cipher.final()]);
-       console.log(fileName)
+          const s3 = new S3({
+            secretAccessKey: process.env.AWS_SECRET_KEYX,
+            accessKeyId: process.env.AWS_ACCESS_KEY_IDX,
+            region: process.env.AWS_REGIONX,
+          });
+        var options = {
+            Bucket:process.env.AWS_BUKET_NAMEX,
+            Key    : fileKey,
+        };
+       
         
-    //    const downloadToken = jwt.sign({ fileName }, keyBuffer, { expiresIn: '5m' });
-
-    //    res.setHeader('Content-Type', 'application/json');
-    //    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-
-    //    res.json({ encrypted, iv, downloadToken, fileName});
-         
-    var file = CryptoJS.AES.encrypt(JSON.stringify(fileData),secretKey).toString();
-    res.json({ file, fileName});
-         
-    });
-  }).on('error', (error) => {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  });
-            
-            
-            
-              
-        } catch (error) {
-             res.status(403).send('Invalid or expired token');
+        var fileStream = s3.getObject(options).createReadStream();
+        res.attachment(fileKey);
+        
+       
+        // res.set({
+        //     "Content-Type": file.contentType,
+        //     "Content-Length": file.contentLength,
+        //     "Content-Disposition": `attachment; filename="${fileName}"`,
+        // });
+        fileStream.pipe(res);  
         }
-    }
+        catch (error) {
+          console.log('Error downloading and encrypting file:', error);
+          res.status(500).send('Error downloading and encrypting file');
+        }
+      };
+      
 }
 
 export default EventController;

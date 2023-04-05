@@ -4,7 +4,7 @@ const eventSchema=new mongoose.Schema({
     userId:{type:String,required:true,trim:true},
     fileName:{type:String,required:true,trim:true},
     type:{type:String,required:true,trim:true}, 
-    url:{type:String,required:true,trim:true}, 
+    Key:{type:String,required:true,trim:true}, 
 })
 
 //Model

@@ -14,9 +14,10 @@ router.get('/files/:id', EventController.download);
 //direct download
 router.get('/downloads/:id', checkUserAuth, EventController.downloadFile);
 
-
+//load list
 router.get('/list', checkUserAuth, EventController.eventList);
 
+//load remove data
 router.delete('/remove',checkUserAuth,EventController.removeFile);
 
 
